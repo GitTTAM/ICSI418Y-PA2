@@ -17,6 +17,7 @@
 client/node_modules/
 server/node_modules/
 server/.env
+.runtime/
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs

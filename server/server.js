@@ -1,6 +1,17 @@
+const path = require("path");
+require("dotenv").config({ path: path.join(__dirname, ".env") });
+
 const express = require("express");
 const cors = require("cors");
-const { connectToMongoDB, disconnectFromMongoDB } = require("./db");
+const { MongoClient } = require("mongodb");
+
+const mongoUri = process.env.MONGO_URI;
+
+if (!mongoUri) {
+    throw new Error("MONGO_URI is missing from server/.env");
+}
+
+const client = new MongoClient(mongoUri);
 
 const app = express();
 
@@ -13,9 +24,20 @@ app.get("/", (req, res) => {
     });
 });
 
+async function connectDatabase() {
+    try {
+        await client.connect();
+        console.log("Connected to MongoDB");
+    } catch (error) {
+        console.error("Could not connect to MongoDB");
+        console.error(error);
+        throw error;
+    }
+}
+
 async function startServer() {
     try {
-        await connectToMongoDB();
+        await connectDatabase();
 
         const server = app.listen(9000, () => {
             console.log("Server running on port 9000");
@@ -24,7 +46,7 @@ async function startServer() {
         const shutdown = () => {
             server.close(async () => {
                 try {
-                    await disconnectFromMongoDB();
+                    await client.close();
                     console.log("Disconnected from MongoDB.");
                 } catch (err) {
                     console.error("Error disconnecting from MongoDB:", err.message);
